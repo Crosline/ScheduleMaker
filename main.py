@@ -1,6 +1,10 @@
 import random as rnd
-import prettytable as pt
 import xlrd
+
+POPULATION_SIZE = 9
+NUMBER_OF_ELITE_SCHEDULES = 1
+TOURNAMENT_SELECTION_SIZE = 3
+MUTATION_RATE = 0.1
 
 
 class Data:
@@ -70,9 +74,9 @@ class Data:
                 crs = []
                 for j in range(len(self.COURSES)):
                     if self.COURSES[j][2] == self.COURSES[i][2]:
-                        crs.append(course[i])
-
+                        crs.append(course[j])
                 department.append(Department(self.COURSES[i][2], crs))
+
 
         self._departments = department
         self._number_of_classes = len(self.COURSES)
@@ -113,11 +117,6 @@ class Data:
     def get_number_of_classes(self):
         return self._number_of_classes
 
-    @staticmethod
-    def get_data(excel_file="datasheet.xlsl"):
-        # PLACE FOR EINAIS TO COMPLETE
-        return 0
-
 
 class Schedule:
     def __init__(self):
@@ -153,7 +152,7 @@ class Schedule:
                 if j >= i:
                     if classes[i].get_meeting_time() == classes[j].get_meeting_time() and \
                             classes[i].get_id() != classes[j].get_id():
-                        if classes[i].get_room() == classes[j].get_instructor():
+                        if classes[i].get_room() == classes[j].get_room():
                             self._number_of_conflicts += 1
                         if classes[i].get_instructor() == classes[j].get_instructor():
                             self._number_of_conflicts += 1
@@ -196,7 +195,54 @@ class Population:
 
 
 class GeneticAlgorithm:
-    ''' '''
+    def evolve(self, pop):
+        return self._mutate_population(self._crossover_population(pop))
+
+    def _crossover_population(self, pop):
+        crossover_pop = Population(0)
+        for i in range(NUMBER_OF_ELITE_SCHEDULES):
+            crossover_pop.get_schedules().append(pop.get_schedules()[i])
+
+        for i in range(NUMBER_OF_ELITE_SCHEDULES, POPULATION_SIZE):
+            s1 = self._select_tournament_population(pop).get_schedules()[0]
+            s2 = self._select_tournament_population(pop).get_schedules()[0]
+            crossover_pop.get_schedules().append(self._crossover_schedule(s1, s2))
+
+        return crossover_pop
+
+    def _mutate_population(self, pop):
+        for i in range(NUMBER_OF_ELITE_SCHEDULES, POPULATION_SIZE):
+            self._mutate_schedule(pop.get_schedules()[i])
+        return pop
+
+    @staticmethod
+    def _crossover_schedule(schedule1, schedule2):
+        c_schedule = Schedule().initialize()
+        for i in range(len(c_schedule.get_classes())):
+            if rnd.random() > 0.5:
+                c_schedule.get_classes()[i] = schedule1.get_classes()[i]
+            else:
+                c_schedule.get_classes()[i] = schedule2.get_classes()[i]
+        return c_schedule
+
+    @staticmethod
+    def _mutate_schedule(s1):
+        s2 = Schedule().initialize()
+
+        for i in range(len(s1.get_classes())):
+            if MUTATION_RATE > rnd.random():
+                s1.get_classes()[i] = s2.get_classes()[i]
+
+        return s2
+
+    @staticmethod
+    def _select_tournament_population(pop):
+        t_pop = Population(0)
+        for i in range(TOURNAMENT_SELECTION_SIZE):
+            t_pop.get_schedules().append(pop.get_schedules()[rnd.randrange(0, POPULATION_SIZE)])
+        t_pop.get_schedules().sort(key=lambda x: x.get_fitness(), reverse=True)
+
+        return t_pop
 
 
 class Course:
@@ -262,7 +308,7 @@ class MeetingTime:
         return self._id
 
     def get_time(self):
-        return self._id
+        return self._time
 
 
 class Department:
@@ -320,7 +366,7 @@ class Class:
             self._meeting_time.get_id())
 
 
-class DisplayMgr:
+class Displayer:
     def print_available_data(self):
         print("--------------------All Data--------------------")
         self.print_department()
@@ -331,57 +377,104 @@ class DisplayMgr:
 
     def print_department(self):
         lst = data.get_departments()
-        table = pt.PrettyTable(["Department", "Courses"])
+        table = []
+        table.append(["Department", "Courses"])
         for i in range(len(lst)):
-
             courses = []
             temp = lst.__getitem__(i).get_courses()
             for j in temp:
                 courses.append(j.get_name() + " (" + j.get_number() + ")")
-
-            table.add_row([lst.__getitem__(i).get_name(), courses])
+            table.append([lst.__getitem__(i).get_name(), courses])
 
         print(table)
 
     def print_course(self):
         lst = data.get_courses()
-        table = pt.PrettyTable(["Course Number", "Name", "Instructors", "Max Students"])
+        table = []
+        table.append(["Course Number", "Name", "Instructors", "Max Students"])
         for i in range(len(lst)):
             instructors = []
             temp = lst.__getitem__(i).get_instructors()
             for j in temp:
                 instructors.append(j.get_name() + " (" + j.get_id() + ")")
-            table.add_row([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_name(), instructors,
-                           lst.__getitem__(i).get_max_students()])
+            table.append([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_name(), instructors,
+                          lst.__getitem__(i).get_max_students()])
         print(table)
 
     def print_meeting_times(self):
         lst = data.get_meeting_times()
-        table = pt.PrettyTable(["Meeting ID", "Time"])
+        table = []
+        table.append(["Meeting ID", "Time"])
         for i in range(len(lst)):
-            table.add_row([lst.__getitem__(i).get_id(), lst.__getitem__(i).get_time()])
+            table.append([lst.__getitem__(i).get_id(), lst.__getitem__(i).get_time()])
 
         print(table)
 
     def print_instructor(self):
         lst = data.get_instructors()
-        table = pt.PrettyTable(["Instructor ID", "Name", "Lessons"])
+        table = []
+        table.append(["Instructor ID", "Name", "Lessons"])
         for i in range(len(lst)):
-            table.add_row(
+            table.append(
                 [lst.__getitem__(i).get_id(), lst.__getitem__(i).get_name(), lst.__getitem__(i).get_lessons()])
         print(table)
 
     def print_room(self):
         lst = data.get_rooms()
-        table = pt.PrettyTable(["Room Number", "Capacity"])
+        table = []
+        table.append(["Room Number", "Capacity"])
         for i in range(len(lst)):
-            table.add_row([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_capacity()])
+            table.append([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_capacity()])
 
         print(table)
+
+    def print_room(self):
+        lst = data.get_rooms()
+        table = []
+        table.append(["Room Number", "Capacity"])
+        for i in range(len(lst)):
+            table.append([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_capacity()])
+
+        print(table)
+
+    def print_generation(self, schedules):
+        table = []
+        table.append(
+            ["Schedule #", "Fitness", "# of Conflicts", "Classes [Dept, Class, Room, Instructor, Meeting Time]"])
+        for i in range(len(schedules)):
+            x = schedules.__getitem__(i)
+            y = []
+            for j in x.get_classes():
+                y.append([j.get_dept().get_name(), j.get_course().get_name(), j.get_room().get_number(),
+                          j.get_instructor().get_id(), j.get_meeting_time().get_time()])
+            table.append([i, x.get_fitness(), x.get_number_of_conflicts(), y])
+
+        for i in table:
+            print(i)
 
 
 data = Data()
 
-displayMgr = DisplayMgr()
+display = Displayer()
+display.print_available_data()
 
-displayMgr.print_available_data()
+generation_number = 0
+print("\nGeneration #" + str(generation_number))
+population = Population(POPULATION_SIZE)
+population.get_schedules().sort(key=lambda x: x.get_fitness(), reverse=True)
+
+genetic_algorithm = GeneticAlgorithm()
+
+schedules = population.get_schedules()
+
+display.print_generation(schedules)
+while generation_number < 5:
+# while population.get_schedules()[0].get_fitness() != 1.0:
+    generation_number += 1
+    print("\n-------------------------------------------------------------------")
+    print("Generation #" + str(generation_number))
+    population = genetic_algorithm.evolve(population)
+    population.get_schedules().sort(key=lambda x: x.get_fitness(), reverse=True)
+
+    display.print_generation(population.get_schedules())
+    print("-------------------------------------------------------------------\n")
