@@ -35,7 +35,7 @@ class Data:
         self._meeting_times = []
         self._instructors = []
 
-        datas = self.read_data("datasheet")
+        datas = read_data("datasheet")
 
         self.ROOMS = datas[0]
         self.MEETING_TIMES = datas[1]
@@ -77,22 +77,7 @@ class Data:
         self._number_of_classes = len(self.COURSES)
 
     @staticmethod
-    def read_data(excel):
-        wb = xlrd.open_workbook(excel + ".xlsx")
-        output = []
-        z = wb.nsheets
-        for n in range(z):
-            sheet = wb.sheet_by_index(n)
-            rows = sheet.nrows
-            cols = sheet.ncols
-            data_of_sheet = []
-            for i in range(rows):
-                data_of_row = []
-                for j in range(cols):
-                    data_of_row.append(sheet.cell_value(i, j))
-                data_of_sheet.append(data_of_row)
-            output.append(data_of_sheet)
-        return output
+
 
     def get_rooms(self):
         return self._rooms
@@ -376,6 +361,23 @@ class DisplayMgr:
 
         print(table)
 
+
+def read_data(excel):
+    wb = xlrd.open_workbook(excel + ".xlsx")
+    output = []
+    z = wb.nsheets
+    for n in range(z):
+        sheet = wb.sheet_by_index(n)
+        rows = sheet.nrows
+        cols = sheet.ncols
+        data_of_sheet = []
+        for i in range(rows):
+            data_of_row = []
+            for j in range(cols):
+                data_of_row.append(sheet.cell_value(i, j))
+            data_of_sheet.append(data_of_row)
+        output.append(data_of_sheet)
+    return output
 
 data = Data()
 
