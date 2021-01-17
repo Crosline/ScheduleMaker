@@ -1,38 +1,46 @@
 import random as rnd
 import prettytable as pt
-
+import xlrd
 
 class Data:
-    ROOMS = \
-        [["R1", 25],
-         ["R2", 45],
-         ["R3", 35]]
-
-    MEETING_TIMES = \
-        [["MT1", "MWF 09:00 - 10:00"],
-         ["MT2", "MWF 10:00 - 11:00"],
-         ["MT3", "TTH 09:00 - 10:30"],
-         ["MT4", "TTH 10:30 - 12:00"]]
-
-    INSTRUCTORS = \
-        [["I1", "YGT YVZ", "MATH, PHYS"],
-         ["I2", "EIN AIS", "MATH, ELE"],
-         ["I3", "STEVE JOBS", "MATH"],
-         ["I4", "EKIN DENIZ", "PHYS, BBM"]]
-
-    COURSES = \
-        [["C1", "MATH", "CS", 25],
-         ["C2", "MATH", "EE", 35],
-         ["C3", "PHYS", "CS", 20],
-         ["C4", "PHYS", "EE", 30],
-         ["C5", "ELE", "EE", 40],
-         ["C6", "ELE", "EE", 25],
-         ["C7", "BBM", "CS", 20]]
+    # NOW WE READ FROM datasheet.xlsl file
+    # ROOMS = \
+    #     [["R1", 25],
+    #      ["R2", 45],
+    #      ["R3", 35]]
+    #
+    # MEETING_TIMES = \
+    #     [["MT1", "MWF 09:00 - 10:00"],
+    #      ["MT2", "MWF 10:00 - 11:00"],
+    #      ["MT3", "TTH 09:00 - 10:30"],
+    #      ["MT4", "TTH 10:30 - 12:00"]]
+    #
+    # INSTRUCTORS = \
+    #     [["I1", "YGT YVZ", "MATH, PHYS"],
+    #      ["I2", "EIN AIS", "MATH, ELE"],
+    #      ["I3", "STEVE JOBS", "MATH"],
+    #      ["I4", "EKIN DENIZ", "PHYS, BBM"]]
+    #
+    # COURSES = \
+    #     [["C1", "MATH", "CS", 25],
+    #      ["C2", "MATH", "EE", 35],
+    #      ["C3", "PHYS", "CS", 20],
+    #      ["C4", "PHYS", "EE", 30],
+    #      ["C5", "ELE", "EE", 40],
+    #      ["C6", "ELE", "EE", 25],
+    #      ["C7", "BBM", "CS", 20]]
 
     def __init__(self):
         self._rooms = []
         self._meeting_times = []
         self._instructors = []
+
+        datas = self.read_data("datasheet")
+
+        self.ROOMS = datas[0]
+        self.MEETING_TIMES = datas[1]
+        self.INSTRUCTORS = datas[2]
+        self.COURSES = datas[3]
 
         for i in range(len(self.ROOMS)):
             self._rooms.append(Room(self.ROOMS[i][0], self.ROOMS[i][1]))
@@ -53,11 +61,11 @@ class Data:
         self._courses = course
 
         department = []
-        tempcrs = []
+        temp_course = []
 
         for i in range(len(self.COURSES)):
-            if self.COURSES[i][2] not in tempcrs:
-                tempcrs.append(self.COURSES[i][2])
+            if self.COURSES[i][2] not in temp_course:
+                temp_course.append(self.COURSES[i][2])
                 crs = []
                 for j in range(len(self.COURSES)):
                     if self.COURSES[j][2] == self.COURSES[i][2]:
@@ -67,6 +75,24 @@ class Data:
 
         self._departments = department
         self._number_of_classes = len(self.COURSES)
+
+    @staticmethod
+    def read_data(excel):
+        wb = xlrd.open_workbook(excel + ".xlsx")
+        output = []
+        z = wb.nsheets
+        for n in range(z):
+            sheet = wb.sheet_by_index(n)
+            rows = sheet.nrows
+            cols = sheet.ncols
+            data_of_sheet = []
+            for i in range(rows):
+                data_of_row = []
+                for j in range(cols):
+                    data_of_row.append(sheet.cell_value(i, j))
+                data_of_sheet.append(data_of_row)
+            output.append(data_of_sheet)
+        return output
 
     def get_rooms(self):
         return self._rooms
