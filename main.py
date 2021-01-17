@@ -2,8 +2,9 @@ import random as rnd
 import prettytable as pt
 import xlrd
 
+
 class Data:
-    # NOW WE READ FROM datasheet.xlsl file
+    # NOW WE READ FROM datasheet.xls file
     # ROOMS = \
     #     [["R1", 25],
     #      ["R2", 45],
@@ -35,12 +36,12 @@ class Data:
         self._meeting_times = []
         self._instructors = []
 
-        datas = read_data("datasheet")
+        self.ROOMS, self.MEETING_TIMES, self.INSTRUCTORS, self.COURSES = self.read_data("datasheet")
 
-        self.ROOMS = datas[0]
-        self.MEETING_TIMES = datas[1]
-        self.INSTRUCTORS = datas[2]
-        self.COURSES = datas[3]
+        # self.ROOMS = datas[0]
+        # self.MEETING_TIMES = datas[1]
+        # self.INSTRUCTORS = datas[2]
+        # self.COURSES = datas[3]
 
         for i in range(len(self.ROOMS)):
             self._rooms.append(Room(self.ROOMS[i][0], self.ROOMS[i][1]))
@@ -77,7 +78,22 @@ class Data:
         self._number_of_classes = len(self.COURSES)
 
     @staticmethod
-
+    def read_data(excel):
+        wb = xlrd.open_workbook(excel + ".xls")
+        output = []
+        z = wb.nsheets
+        for n in range(z):
+            sheet = wb.sheet_by_index(n)
+            rows = sheet.nrows
+            cols = sheet.ncols
+            data_of_sheet = []
+            for i in range(rows):
+                data_of_row = []
+                for j in range(cols):
+                    data_of_row.append(sheet.cell_value(i, j))
+                data_of_sheet.append(data_of_row)
+            output.append(data_of_sheet)
+        return output
 
     def get_rooms(self):
         return self._rooms
@@ -98,7 +114,7 @@ class Data:
         return self._number_of_classes
 
     @staticmethod
-    def get_data(excel_file = "datasheet.xlsl"):
+    def get_data(excel_file="datasheet.xlsl"):
         # PLACE FOR EINAIS TO COMPLETE
         return 0
 
@@ -335,7 +351,8 @@ class DisplayMgr:
             temp = lst.__getitem__(i).get_instructors()
             for j in temp:
                 instructors.append(j.get_name() + " (" + j.get_id() + ")")
-            table.add_row([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_name(), instructors, lst.__getitem__(i).get_max_students()])
+            table.add_row([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_name(), instructors,
+                           lst.__getitem__(i).get_max_students()])
         print(table)
 
     def print_meeting_times(self):
@@ -350,7 +367,8 @@ class DisplayMgr:
         lst = data.get_instructors()
         table = pt.PrettyTable(["Instructor ID", "Name", "Lessons"])
         for i in range(len(lst)):
-            table.add_row([lst.__getitem__(i).get_id(), lst.__getitem__(i).get_name(), lst.__getitem__(i).get_lessons()])
+            table.add_row(
+                [lst.__getitem__(i).get_id(), lst.__getitem__(i).get_name(), lst.__getitem__(i).get_lessons()])
         print(table)
 
     def print_room(self):
@@ -361,23 +379,6 @@ class DisplayMgr:
 
         print(table)
 
-
-def read_data(excel):
-    wb = xlrd.open_workbook(excel + ".xlsx")
-    output = []
-    z = wb.nsheets
-    for n in range(z):
-        sheet = wb.sheet_by_index(n)
-        rows = sheet.nrows
-        cols = sheet.ncols
-        data_of_sheet = []
-        for i in range(rows):
-            data_of_row = []
-            for j in range(cols):
-                data_of_row.append(sheet.cell_value(i, j))
-            data_of_sheet.append(data_of_row)
-        output.append(data_of_sheet)
-    return output
 
 data = Data()
 
