@@ -2,7 +2,7 @@ import random as rnd
 import xlrd
 
 POPULATION_SIZE = 9
-NUMBER_OF_ELITE_SCHEDULES = 1
+NUMBER_OF_ELITE_SCHEDULES = 2
 TOURNAMENT_SELECTION_SIZE = 3
 MUTATION_RATE = 0.1
 
@@ -21,10 +21,10 @@ class Data:
     #      ["MT4", "TTH 10:30 - 12:00"]]
     #
     # INSTRUCTORS = \
-    #     [["I1", "YGT YVZ", "MATH, PHYS"],
-    #      ["I2", "EIN AIS", "MATH, ELE"],
-    #      ["I3", "STEVE JOBS", "MATH"],
-    #      ["I4", "EKIN DENIZ", "PHYS, BBM"]]
+    #     [["I1", "YGT YVZ", "MATH, PHYS", "MT1, MT2, MT3, MT4, MT5, MT6, MT7, MT8, MT9, MT10"],
+    #      ["I2", "EIN AIS", "MATH, ELE", "MT1, MT2, MT3, MT4, MT5, MT6, MT7, MT8, MT9, MT10"],
+    #      ["I3", "STEVE JOBS", "MATH", "MT11, MT12, MT13, MT14, MT15, MT16, MT17, MT18, MT19, MT20"],
+    #      ["I4", "EKIN DENIZ", "PHYS, BBM", "MT11, MT12, MT13, MT14, MT15, MT16, MT17, MT18, MT19, MT20"]]
     #
     # COURSES = \
     #     [["C1", "MATH", "CS", 25],
@@ -53,7 +53,8 @@ class Data:
             self._meeting_times.append(MeetingTime(self.MEETING_TIMES[i][0], self.MEETING_TIMES[i][1]))
         for i in range(len(self.INSTRUCTORS)):
             for j in self.INSTRUCTORS[i][2].split(","):
-                self._instructors.append(Instructor(self.INSTRUCTORS[i][0], self.INSTRUCTORS[i][1], j))
+                for k in self.INSTRUCTORS[i][3].split(","):
+                    self._instructors.append(Instructor(self.INSTRUCTORS[i][0], self.INSTRUCTORS[i][1], j, k))
 
         course = []
         for i in range(len(self.COURSES)):
@@ -76,7 +77,6 @@ class Data:
                     if self.COURSES[j][2] == self.COURSES[i][2]:
                         crs.append(course[j])
                 department.append(Department(self.COURSES[i][2], crs))
-
 
         self._departments = department
         self._number_of_classes = len(self.COURSES)
@@ -145,13 +145,15 @@ class Schedule:
         self._number_of_conflicts = 0
         classes = self.get_classes()
 
-        for i in range(0, len(classes)):
+        for i in range(len(classes)):
             if classes[i].get_room().get_capacity() < classes[i].get_course().get_max_students():
                 self._number_of_conflicts += 1
             for j in range(len(classes)):
                 if j >= i:
                     if classes[i].get_meeting_time() == classes[j].get_meeting_time() and \
                             classes[i].get_id() != classes[j].get_id():
+                        if classes[i].get_dept() == classes[j].get_dept():
+                            self._number_of_conflicts += 1
                         if classes[i].get_room() == classes[j].get_room():
                             self._number_of_conflicts += 1
                         if classes[i].get_instructor() == classes[j].get_instructor():
@@ -269,16 +271,20 @@ class Course:
 
 
 class Instructor:
-    def __init__(self, id_number, name, lessons):
+    def __init__(self, id_number, name, lessons, meeting_times):
         self._id = id_number
         self._name = name
         self._lessons = lessons
+        self._meeting_times = meeting_times
 
     def get_id(self):
         return self._id
 
     def get_name(self):
         return self._name
+
+    def get_meeting_times(self):
+        return self._meeting_times
 
     def get_lessons(self):
         return self._lessons
@@ -299,10 +305,17 @@ class Room:
         return self._capacity
 
 
+# "MT1 MT1 id"
+# "W 09:00 - 10:00"
 class MeetingTime:
     def __init__(self, id_number, time):
         self._id = id_number
         self._time = time
+
+    # def __eq__(self, other):
+    #     if self._id == other.get_id():
+    #         return True
+    #     return False
 
     def get_id(self):
         return self._id
@@ -367,6 +380,7 @@ class Class:
 
 
 class Displayer:
+    @staticmethod
     def print_available_data(self):
         print("--------------------All Data--------------------")
         self.print_department()
@@ -375,10 +389,10 @@ class Displayer:
         self.print_instructor()
         self.print_meeting_times()
 
-    def print_department(self):
+    @staticmethod
+    def print_department():
         lst = data.get_departments()
-        table = []
-        table.append(["Department", "Courses"])
+        table = [["Department", "Courses"]]
         for i in range(len(lst)):
             courses = []
             temp = lst.__getitem__(i).get_courses()
@@ -388,10 +402,10 @@ class Displayer:
 
         print(table)
 
-    def print_course(self):
+    @staticmethod
+    def print_course():
         lst = data.get_courses()
-        table = []
-        table.append(["Course Number", "Name", "Instructors", "Max Students"])
+        table = [["Course Number", "Name", "Instructors", "Max Students"]]
         for i in range(len(lst)):
             instructors = []
             temp = lst.__getitem__(i).get_instructors()
@@ -401,56 +415,93 @@ class Displayer:
                           lst.__getitem__(i).get_max_students()])
         print(table)
 
-    def print_meeting_times(self):
+    @staticmethod
+    def print_meeting_times():
         lst = data.get_meeting_times()
-        table = []
-        table.append(["Meeting ID", "Time"])
+        table = [["Meeting ID", "Time"]]
         for i in range(len(lst)):
             table.append([lst.__getitem__(i).get_id(), lst.__getitem__(i).get_time()])
 
         print(table)
 
-    def print_instructor(self):
+    @staticmethod
+    def print_instructor():
         lst = data.get_instructors()
-        table = []
-        table.append(["Instructor ID", "Name", "Lessons"])
+        table = [["Instructor ID", "Name", "Lessons"]]
         for i in range(len(lst)):
             table.append(
                 [lst.__getitem__(i).get_id(), lst.__getitem__(i).get_name(), lst.__getitem__(i).get_lessons()])
         print(table)
 
-    def print_room(self):
+    @staticmethod
+    def print_room():
         lst = data.get_rooms()
-        table = []
-        table.append(["Room Number", "Capacity"])
+        table = [["Room Number", "Capacity"]]
         for i in range(len(lst)):
             table.append([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_capacity()])
 
         print(table)
 
-    def print_room(self):
-        lst = data.get_rooms()
-        table = []
-        table.append(["Room Number", "Capacity"])
-        for i in range(len(lst)):
-            table.append([lst.__getitem__(i).get_number(), lst.__getitem__(i).get_capacity()])
+    def print_generation(self, schedule, is_dept=True):
+        table = [["Schedule #", "Fitness", "# of Conflicts", "Classes [Dept, Class, Room, Instructor, Meeting Time]"]]
 
-        print(table)
-
-    def print_generation(self, schedules):
-        table = []
-        table.append(
-            ["Schedule #", "Fitness", "# of Conflicts", "Classes [Dept, Class, Room, Instructor, Meeting Time]"])
-        for i in range(len(schedules)):
-            x = schedules.__getitem__(i)
+        for i in range(len(schedule)):
+            x = schedule.__getitem__(i)
             y = []
             for j in x.get_classes():
                 y.append([j.get_dept().get_name(), j.get_course().get_name(), j.get_room().get_number(),
                           j.get_instructor().get_id(), j.get_meeting_time().get_time()])
+
+            if is_dept:
+                y.sort(key=lambda z: (z[0], self.gs(z[4])))
+            else:
+                y.sort(key=lambda z: (z[3], self.gs(z[4])))
+
+            # y.sort(key=lambda x: (x[0][0], self.gs(x[0][4])))
+
             table.append([i, x.get_fitness(), x.get_number_of_conflicts(), y])
 
         for i in table:
             print(i)
+
+    @staticmethod
+    def get_first(elem):
+        return elem[0][0]
+
+    @staticmethod
+    def gs(obj1):
+        days = ["M", "T", "W", "Th", "F", "St", "Sn"]
+        temp1 = obj1.split(" ")
+        index = 0
+        for i in range(len(days)):
+            if temp1[0] == days[i]:
+                index = i + 1
+        # "009:00 - 10:00"
+        # "1
+        return_string = str(index)
+        for i in range(1, len(temp1)):
+            return_string += temp1[i]
+        return return_string
+
+    @staticmethod
+    def ge(obj1, other):
+        days = ["M", "T", "W", "Th", "F", "St", "Sn"]
+        index = [0, 0]
+        temp1 = obj1.split(" ")[0]
+        temp2 = other.split(" ")[0]
+        for i in range(len(days)):
+            if temp1 == days[i]:
+                index[0] = i + 1
+            if temp2 == days[i]:
+                index[1] = i + 1
+
+        if index[0] > index[1]:
+            return True
+        elif index[0] == index[1]:
+            if obj1[2:] >= other[2:]:
+                return True
+
+        return False
 
 
 data = Data()
@@ -468,8 +519,8 @@ genetic_algorithm = GeneticAlgorithm()
 schedules = population.get_schedules()
 
 display.print_generation(schedules)
-while generation_number < 5:
-# while population.get_schedules()[0].get_fitness() != 1.0:
+# while generation_number < 15:
+while population.get_schedules()[8].get_fitness() != 1 and generation_number < 2000:
     generation_number += 1
     print("\n-------------------------------------------------------------------")
     print("Generation #" + str(generation_number))
@@ -477,4 +528,5 @@ while generation_number < 5:
     population.get_schedules().sort(key=lambda x: x.get_fitness(), reverse=True)
 
     display.print_generation(population.get_schedules())
+    display.print_generation(population.get_schedules(), False)
     print("-------------------------------------------------------------------\n")
