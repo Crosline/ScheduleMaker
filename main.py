@@ -380,7 +380,7 @@ class Class:
 
 
 class Displayer:
-    @staticmethod
+
     def print_available_data(self):
         print("--------------------All Data--------------------")
         self.print_department()
