@@ -450,7 +450,7 @@ class Displayer:
             y = []
             for j in x.get_classes():
                 y.append([j.get_dept().get_name(), j.get_course().get_name(), j.get_room().get_number(),
-                          j.get_instructor().get_id(), j.get_meeting_time().get_time()])
+                          j.get_instructor().get_id(), j.get_meeting_time().get_id()])
 
             if is_dept:
                 y.sort(key=lambda z: (z[0], self.gs(z[4])))
